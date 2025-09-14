@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken")
 
 
-const generateToken =  (res, userId)=>{
+const generateToken = async (res, userId)=>{
   
 const token =  jwt.sign({
    userId
@@ -9,6 +9,7 @@ const token =  jwt.sign({
 {
     expiresIn:'30d', // expires in 30 days 
 })
+
 
 res.cookie('token',token,{
     httpOnly: true,

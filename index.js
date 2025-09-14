@@ -11,7 +11,7 @@ const User = require("./model/User")
 const moment = require("moment-timezone")
 const jwt = require("jsonwebtoken")
 const generateToken = require("./utils/generateToken")
-
+const bcrypt = require("bcrypt")
 
 ConnectDB()
 
@@ -23,6 +23,9 @@ app.get('/',(req,res)=>{
 
 
 // Register ROute
+// @desc    Auth user & get token
+// @route   POST /api/users/register
+// @access  Public
 app.post('/register',async (req,res)=>{
     
     const {username,password} = req.body
@@ -38,11 +41,19 @@ app.post('/register',async (req,res)=>{
         })
     }
 
+    const salt = await bcrypt.genSalt(10)
+
+    // Hash the password and save !! :)
+    const hash = await bcrypt.hash(password, salt);
+
+
     // if not => create a user
     const result = await  User.create({
         username,
-        password
+        password:hash
     })
+
+
 
     if(result){
      generateToken(res,result._id)
@@ -56,7 +67,35 @@ app.post('/register',async (req,res)=>{
 
 
 //Login :
+app.post('/login',async (req,res)=>{
+    
+    const {username , password} = req.body
 
+    const user = await User.findOne({username})
+    
+    if(!user){
+        return res.status(404).json({
+            message: `Please Register first`
+        })
+    }
+
+  
+
+    const ismatch = await bcrypt.compare(password,user.password)
+    
+    if(!ismatch){
+         return res.status(404).json({
+            message: `Invalid userName and password!!`
+        })
+    }
+
+    generateToken(res,user._id)
+
+    return res.json({
+        message :`User Successfully LoggedIn `
+    })
+
+})
 
 
 app.listen(process.env.PORT,()=>{
